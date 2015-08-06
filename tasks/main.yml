@@ -1,0 +1,34 @@
+---
+
+- name: Assert Docker is running
+  service: name=docker state=started
+
+- name: Pull MongoDB Docker Continer
+  command: sudo docker pull mongo:2.4
+
+- name: Pull Docker Continer
+  command: sudo docker pull {{dev_portal_container}}:{{dev_portal_version}}
+
+- name: Add Upstart file for MongoDB
+  template: src=mongodb-upstart.js dest=/etc/init/mongodb.conf mode=0644
+
+- name: Add Upstart file for Dev Portal
+  template: src=upstart.js dest=/etc/init/dev-portal.conf mode=0644
+
+- name: Ensure dnsmasq binds to localhost IP
+  lineinfile: line="listen-address=127.0.0.1" dest=/etc/dnsmasq.conf
+
+- name: Ensure dnsmasq binds to docker bridge IP
+  lineinfile: line="listen-address=172.17.42.1" dest=/etc/dnsmasq.conf
+
+- name: Ensure dnsmasq binds to docker interface
+  lineinfile: line="interface=docker0" dest=/etc/dnsmasq.conf
+
+- name: Ensure dnsmasq binds to loopback interface
+  lineinfile: line="interface=lo" dest=/etc/dnsmasq.conf
+
+- name: Enable MongoDB service
+  service: name=mongodb enabled=true
+
+- name: Enable dev portal service
+  service: name=dev-portal enabled=true
